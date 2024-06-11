@@ -4,9 +4,9 @@
  */
 
 import { Prompter } from '../ui/prompter'
-import * as _ from 'lodash'
 import { StateWithCache, WizardState } from './wizard'
 import { ExpandWithObject } from '../utilities/tsUtils'
+import { _CloneDeep, _IsEmpty, _Get, _Set } from '../utilities/objectUtils'
 
 export type PrompterProvider<TState, TProp> = (
     state: StateWithCache<WizardState<TState>, TProp>
@@ -73,13 +73,17 @@ type Form<T, TState = T> = {
 
 type FormDataElement<TState, TProp> = ContextOptions<TState, TProp> & { provider?: PrompterProvider<TState, TProp> }
 
-function isAssigned<TProp>(obj: TProp): boolean {
-    return obj !== undefined || _.isEmpty(obj) === false
+function isAssigned<TProp extends object>(obj: TProp): boolean {
+    return obj !== undefined || _IsEmpty(obj) === false
 }
 
-function checkParent<TState>(prop: string, state: TState, options: FormDataElement<TState, any>): boolean {
+function checkParent<TState extends object>(
+    prop: string,
+    state: TState,
+    options: FormDataElement<TState, any>
+): boolean {
     const parent = prop.split('.').slice(0, -1)
-    return options.requireParent === true ? parent.length !== 0 && _.get(state, parent) === undefined : false
+    return options.requireParent === true ? parent.length !== 0 && _Get(state, parent) === undefined : false
 }
 
 type FormProperty = keyof (FormElement<any, any> & ParentFormElement<any, any>)
@@ -108,15 +112,15 @@ export class WizardForm<TState extends Partial<Record<keyof TState, unknown>>> {
     }
 
     public applyDefaults(state: TState): TState {
-        const defaultState = _.cloneDeep(state)
+        const defaultState = _CloneDeep(state)
 
         this.formData.forEach((opt, targetProp) => {
-            const current = _.get(state, targetProp)
+            const current = _Get(state, targetProp)
 
             if (!isAssigned(current) && opt.setDefault !== undefined && !checkParent(targetProp, state, opt)) {
                 const defaultValue = opt.setDefault(state as WizardState<TState>)
                 if (defaultValue !== undefined) {
-                    _.set(defaultState, targetProp, defaultValue)
+                    _Set(defaultState, targetProp, defaultValue)
                 }
             }
         })
@@ -136,7 +140,7 @@ export class WizardForm<TState extends Partial<Record<keyof TState, unknown>>> {
     }
 
     public canShowProperty(prop: string, state: TState, defaultState: TState = this.applyDefaults(state)): boolean {
-        const current = _.get(state, prop)
+        const current = _Get(state, prop)
         const options = this.formData.get(prop) ?? {}
 
         if (isAssigned(current) || checkParent(prop, state, options)) {
@@ -159,7 +163,7 @@ export class WizardForm<TState extends Partial<Record<keyof TState, unknown>>> {
 
         if (element.provider !== undefined) {
             wrappedElement.provider = state => {
-                const stateWithCache = Object.assign(_.get(state, prop, {}), {
+                const stateWithCache = Object.assign(_Get(state, prop, {}), {
                     stepCache: state.stepCache,
                     estimator: state.estimator,
                 })
@@ -170,17 +174,17 @@ export class WizardForm<TState extends Partial<Record<keyof TState, unknown>>> {
 
         if (element.showWhen !== undefined || options?.showWhen !== undefined || options?.requireParent === true) {
             wrappedElement.showWhen = state =>
-                (options?.requireParent !== true || _.get(state, prop) !== undefined) &&
-                (element.showWhen !== undefined ? element.showWhen!(_.get(state, prop, {})) : true) &&
+                (options?.requireParent !== true || _Get(state, prop) !== undefined) &&
+                (element.showWhen !== undefined ? element.showWhen!(_Get(state, prop, {})) : true) &&
                 (options?.showWhen !== undefined ? options.showWhen!(state) : true)
         }
 
         wrappedElement.setDefault =
             element.setDefault !== undefined
                 ? state =>
-                      options?.requireParent !== true || _.get(state, prop) !== undefined
+                      options?.requireParent !== true || _Get(state, prop) !== undefined
                           ? options?.showWhen === undefined || options.showWhen(state)
-                              ? element.setDefault!(_.get(state, prop, {}))
+                              ? element.setDefault!(_Get(state, prop, {}))
                               : undefined
                           : undefined
                 : undefined

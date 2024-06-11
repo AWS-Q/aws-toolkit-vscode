@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as _ from 'lodash'
 import assert from 'assert'
 import { ExpandWithObject } from '../../../shared/utilities/tsUtils'
 import { Wizard } from '../../../shared/wizards/wizard'
 import { WizardForm } from '../../../shared/wizards/wizardForm'
+import { _Get, _Set } from '../../../shared/utilities/objectUtils'
 
 interface MockWizardFormElement<TProp> {
     readonly value: TProp | undefined
@@ -120,7 +120,7 @@ export async function createWizardTester<T extends Partial<T>>(wizard: Wizard<T>
     }
 
     function assertValue<TProp>(path: string): MockWizardFormElement<TProp>['assertValue'] {
-        const actual = _.get(form.applyDefaults(state), path)
+        const actual = _Get(form.applyDefaults(state), path)
 
         return (expected: TProp) =>
             failIf(actual !== expected, `Property "${path}" had unexpected value: ${actual} !== ${expected}`)
@@ -136,11 +136,11 @@ export async function createWizardTester<T extends Partial<T>>(wizard: Wizard<T>
                     // Using a switch rather than a map since a generic index signature is not yet possible
                     switch (prop) {
                         case VALUE:
-                            return _.get(form.applyDefaults(state), path)
+                            return _Get(form.applyDefaults(state), path)
                         case APPLY_INPUT:
-                            return <TProp>(input: TProp) => _.set(state, path, input)
+                            return <TProp>(input: TProp) => _Set(state, path, input)
                         case CLEAR_INPUT:
-                            return () => _.set(state, path, undefined)
+                            return () => _Set(state, path, undefined)
                         case ASSERT_SHOW:
                             return assertShow(propPath)
                         case ASSERT_SHOW_FIRST:
