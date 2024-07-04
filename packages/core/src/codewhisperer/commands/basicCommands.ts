@@ -461,7 +461,7 @@ export const registerToolkitApiCallback = Commands.declare(
         // we need to do it manually here because the Toolkit would have been unable to call
         // this API if the Q/CW extension started afterwards (and this code block is running).
         if (isExtensionInstalled(VSCODE_EXTENSION_ID.awstoolkit)) {
-            getLogger().info(`Trying to register toolkit callback. Toolkit is installed, 
+            getLogger().info(`Trying to register toolkit callback. Toolkit is installed,
                         toolkit activated = ${isExtensionActive(VSCODE_EXTENSION_ID.awstoolkit)}`)
             if (toolkitApi) {
                 // when this command is executed by AWS Toolkit activation
@@ -488,5 +488,27 @@ export const registerToolkitApiCallback = Commands.declare(
                 }
             }
         }
+    }
+)
+
+/**
+ * proactively get the size of the workspace
+ * we need to store this information to determine if the workspace is too large
+ * the max is 200MB (200 * 1024 * 1024)
+ * we should be able to use vscode.workspace.fs.stat to get the size of the workspace
+ * we need to save this information to the telemetry
+ * we will need to be able to call the telemetry helper to send the size of the workspace
+ * later on in the extension lifecycle we can get the size of the workspace from the telemetry
+ */
+export const getWorkspaceSize = Commands.declare(
+    { id: 'aws.amazonq.getWorkspaceSize', logging: false },
+    () => async () => {
+        const workspaceFolders = vscode.workspace.workspaceFolders
+        if (!workspaceFolders) {
+            return
+        }
+        const workspaceFolder = workspaceFolders[0]
+        const stat = await vscode.workspace.fs.stat(workspaceFolder.uri)
+        TelemetryHelper.instance.sendWorkspaceSize(stat.size)
     }
 )

@@ -1780,7 +1780,8 @@
                 "chatAddMessageEvent": { "shape": "ChatAddMessageEvent" },
                 "chatInteractWithMessageEvent": { "shape": "ChatInteractWithMessageEvent" },
                 "chatUserModificationEvent": { "shape": "ChatUserModificationEvent" },
-                "terminalUserInteractionEvent": { "shape": "TerminalUserInteractionEvent" }
+                "terminalUserInteractionEvent": { "shape": "TerminalUserInteractionEvent" },
+                "workspaceSizeEvent": { "shape": "WorkspaceSizeEvent" }
             },
             "union": true
         },

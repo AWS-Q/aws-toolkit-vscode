@@ -609,4 +609,33 @@ export class TelemetryHelper {
                 )
             })
     }
+
+    /**
+     * Send the workspace size to the telemetry service
+     * this is gathered from getWorkspaceSize in basic commands
+     * which passes in a vscode.workspace.fs.stat for the workspace folder
+     */
+    public sendWorkspaceSize(workspaceSize: number) {
+        client
+            .sendTelemetryEvent({
+                telemetryEvent: {
+                    workspaceSizeEvent: {
+                        size: workspaceSize,
+                        timestamp: new Date(Date.now()),                        timestamp: new Date(Date.now()),
+                    },
+                },
+            })
+            .then()
+            .catch(error => {
+                let requestId: string | undefined
+                if (isAwsError(error)) {
+                    requestId = error.requestId
+                }
+                getLogger().debug(
+                    `Failed to sendWorkspaceSize to CodeWhisperer, requestId: ${requestId ?? ''}, message: ${
+                        error.message
+                    }`
+                )
+            })
+    }
 }
