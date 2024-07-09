@@ -296,14 +296,17 @@ async function filterOutGitignoredFiles(rootPath: string, files: vscode.Uri[]): 
 }
 
 /**
- * Get the size of the currently sleected workspace and return it in bytes
+ * Attempts to collect all files that are marked as source and throws an error if the size is too large
  * @param sourcePaths the paths where collection starts
  * @param workspaceFolders the current workspace folders opened
  * @param respectGitIgnore whether to respect gitignore file
- * @returns the size of the workspace in bytes
+ * @returns either the collection of files or an error if the size is too large
  *
  */
-export async function getWorkspaceSize(sourcePaths: string[], respectGitIgnore: boolean = true): Promise<vscode.Uri[]> {
+export async function collectFileOrThrowError(
+    sourcePaths: string[],
+    respectGitIgnore: boolean = true
+): Promise<vscode.Uri[]> {
     let totalSizeBytes = 0
     let collection: vscode.Uri[] = []
 
@@ -373,7 +376,7 @@ export async function collectFiles(
         return prefix === '' ? path : `${prefix}/${path}`
     }
 
-    const collection = await getWorkspaceSize(sourcePaths, respectGitIgnore)
+    const collection = await collectFileOrThrowError(sourcePaths, respectGitIgnore)
     for (const file of collection) {
         const relativePath = getWorkspaceRelativePath(file.fsPath, { workspaceFolders })
         if (!relativePath) {
